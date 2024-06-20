@@ -10,7 +10,9 @@ import Messages from "./Messages";
 
 
 
-const socket = io.connect('https://websocket-chat-server-9j13.onrender.com')
+
+
+const socket = io.connect('http://localhost:5000')
 
 const Chat = () => { 
    const { search } = useLocation();
@@ -20,6 +22,8 @@ const Chat = () => {
    const [message, setMesage] = useState("");
    const [isOpen, setOpen] = useState(false);
    const [users, setUsers] = useState(0);
+   const [isTyping, setIsTyping] = useState(false);
+   
 
    useEffect(() => {
       const searchParams = Object.fromEntries(new URLSearchParams(search));
@@ -27,19 +31,33 @@ const Chat = () => {
       socket.emit("join", searchParams);
     }, [search]);
 
-   useEffect(() => {
-      socket.on("message", ({ data }) =>{
-
-         setState((_state => [..._state, data]));
-         console.log(data);
+    useEffect(() => {
+      socket.on("message", ({ data }) => {
+        setState((_state) => [..._state, data]);
+        console.log(data);
       });
-   }, []);
+  
+      socket.on('typing', (userName, room) => {
+        // Отправляем событие typing на сервер
+        socket.emit('typing', { name: userName, isTyping: true });
+      });
+  
+      socket.on('stopTyping', (userName, room) => {
+        // Отправляем событие stopTyping на сервер
+        socket.emit('stopTyping', { name: userName, isTyping: false });
+      });
+  
+    }, []);
+  
 
    useEffect(() => {
       socket.on("room", ({ data: { users } }) => {
         setUsers(users.length);
       });
     }, []);
+
+   
+    
 
    console.log(state);
 
@@ -49,7 +67,10 @@ const Chat = () => {
     };
 
 
-   const handleChange = ({target: {value}}) => setMesage(value);
+    const handleChange = ({ target: { value } }) => {
+      setMesage(value);
+      handleTyping(); // Вызываем функцию обработки печати при изменении текста
+    };
 
    const handleSubmit = (e) => {
       e.preventDefault();
@@ -61,6 +82,15 @@ const Chat = () => {
       setMesage("");
    };
 
+   const handleTyping = () => {
+      setIsTyping(true);
+      setTimeout(() => {
+        setIsTyping(false);
+      }, 2000); // устанавливаем таймер на 2 секунды
+    };
+
+    
+
    const onEmojiClick = ({emoji}) => setMesage(`${message} ${emoji}`);
 
 
@@ -70,6 +100,10 @@ const Chat = () => {
              <div className={styles.title}>
                {params.room}
              </div>
+             {isTyping && <p>{params.name} печатает...</p>}
+
+
+
              <div className={styles.users}>
              {users} пользователей в этой комнате
              </div>
@@ -80,8 +114,10 @@ const Chat = () => {
          <div className={styles.messages}>
             <Messages messages = {state} name={params.name} />
          </div>
+         
 
          <form className={styles.form} onSubmit={handleSubmit}>
+         
             <div className={styles.input}>
             <input 
                type="text" 
