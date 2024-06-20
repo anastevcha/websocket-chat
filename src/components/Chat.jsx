@@ -37,17 +37,15 @@ const Chat = () => {
         console.log(data);
       });
   
-      socket.on('typing', (userName, room) => {
-        // Отправляем событие typing на сервер
-        socket.emit('typing', { name: userName, isTyping: true });
-      });
-  
-      socket.on('stopTyping', (userName, room) => {
-        // Отправляем событие stopTyping на сервер
-        socket.emit('stopTyping', { name: userName, isTyping: false });
-      });
-  
-    }, []);
+      socket.on('typing', ({ name, isTyping }) => {
+         socket.to(params.room).emit('userTyping', { name, isTyping });
+       });
+       
+       socket.on('stopTyping', ({ name, isTyping }) => {
+         socket.to(params.room).emit('userStopTyping', { name, isTyping });
+       });
+       
+     }, []);
   
 
    useEffect(() => {
@@ -84,11 +82,12 @@ const Chat = () => {
 
    const handleTyping = () => {
       setIsTyping(true);
+      socket.emit('typing', { name: params.name, isTyping: true }); 
       setTimeout(() => {
         setIsTyping(false);
-      }, 2000); // устанавливаем таймер на 2 секунды
+        socket.emit('stopTyping', { name: params.name, isTyping: false }); 
+      }, 2000);
     };
-
     
 
    const onEmojiClick = ({emoji}) => setMesage(`${message} ${emoji}`);
@@ -100,10 +99,9 @@ const Chat = () => {
              <div className={styles.title}>
                {params.room}
              </div>
-             {isTyping && <p>{params.name} печатает...</p>}
-
-
-
+             {isTyping && !state.some((msg) => msg.name === params.name) && (
+    <p>Кто-то печатает...</p>
+  )}
              <div className={styles.users}>
              {users} пользователей в этой комнате
              </div>
@@ -111,7 +109,7 @@ const Chat = () => {
                Покинуть комнату
              </button>
          </div>
-         <div className={styles.messages}>
+         <div className={styles.messages} >
             <Messages messages = {state} name={params.name} />
          </div>
          
