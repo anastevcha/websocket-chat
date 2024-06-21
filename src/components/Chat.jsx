@@ -12,7 +12,7 @@ import Messages from "./Messages";
 
 
 
-const socket = io.connect('https://websocket-chat-server-9j13.onrender.com')
+const socket = io.connect('http://localhost:5000')
 
 const Chat = () => { 
    const { search } = useLocation();
@@ -23,6 +23,7 @@ const Chat = () => {
    const [isOpen, setOpen] = useState(false);
    const [users, setUsers] = useState(0);
    const [isTyping, setIsTyping] = useState(false);
+   
    
 
    useEffect(() => {
@@ -36,17 +37,17 @@ const Chat = () => {
         setState((_state) => [..._state, data]);
         console.log(data);
       });
-  
-      socket.on('typing', ({ name, isTyping }) => {
-         socket.to(params.room).emit('userTyping', { name, isTyping });
+
+      socket.on('typing', (userName, room) => {
+        // Отправляем событие typing на сервер
+        socket.emit('typing', { name: userName, isTyping: true });
+      });
+      socket.on('stopTyping', (userName, room) => {
+         // Отправляем событие stopTyping на сервер
+         socket.emit('stopTyping', { name: userName, isTyping: false });
        });
-       
-       socket.on('stopTyping', ({ name, isTyping }) => {
-         socket.to(params.room).emit('userStopTyping', { name, isTyping });
-       });
-       
-     }, [params.room]);
-  
+ 
+     }, []);
 
    useEffect(() => {
       socket.on("room", ({ data: { users } }) => {
@@ -55,8 +56,6 @@ const Chat = () => {
     }, []);
 
    
-    
-
    console.log(state);
 
    const leftRoom = () => {
@@ -69,6 +68,8 @@ const Chat = () => {
       setMesage(value);
       handleTyping(); // Вызываем функцию обработки печати при изменении текста
     };
+    
+   
 
    const handleSubmit = (e) => {
       e.preventDefault();
@@ -82,11 +83,9 @@ const Chat = () => {
 
    const handleTyping = () => {
       setIsTyping(true);
-      socket.emit('typing', { name: params.name, isTyping: true }); 
       setTimeout(() => {
         setIsTyping(false);
-        socket.emit('stopTyping', { name: params.name, isTyping: false }); 
-      }, 2000);
+      }, 2000); // устанавливаем таймер на 2 секунды
     };
     
 
