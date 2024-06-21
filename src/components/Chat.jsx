@@ -45,7 +45,7 @@ const Chat = () => {
          socket.to(params.room).emit('userStopTyping', { name, isTyping });
        });
        
-     }, []);
+     }, [params.room]);
   
 
    useEffect(() => {
