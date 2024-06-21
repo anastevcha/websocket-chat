@@ -92,6 +92,16 @@ const Chat = () => {
 
    const onEmojiClick = ({emoji}) => setMesage(`${message} ${emoji}`);
 
+   function getDeclension(usersCount) {
+      if (users === 1) {
+          return 'пользователь';
+      } else if (usersCount >= 2 && usersCount <= 4) {
+          return 'пользователя';
+      } else {
+          return 'пользователей';
+      }
+  }
+
 
    return(
       <div className={styles.wrap}>
@@ -100,10 +110,11 @@ const Chat = () => {
                {params.room}
              </div>
              {isTyping && !state.some((msg) => msg.name === params.name) && (
-    <p>Кто-то печатает...</p>
-  )}
+    <p>{params.name} печатает...</p>
+)}
+
              <div className={styles.users}>
-             {users} пользователей в этой комнате
+             {users} {getDeclension(users)} в этой комнате
              </div>
              <button className={styles.left} onClick={leftRoom}>
                Покинуть комнату
