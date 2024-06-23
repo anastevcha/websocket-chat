@@ -12,7 +12,7 @@ import Messages from "./Messages";
 
 
 
-const socket = io.connect('https://websocket-chat-server-9j13.onrender.com')
+const socket = io.connect('http://localhost:5000')
 
 const Chat = () => { 
    const { search } = useLocation();
@@ -37,6 +37,7 @@ const Chat = () => {
         setState((_state) => [..._state, data]);
         console.log(data);
       });
+      
 
       socket.on('typing', (userName, room) => {
         // Отправляем событие typing на сервер
